@@ -1,16 +1,18 @@
-declare const write: unique symbol;
-declare const remove: unique symbol;
-declare const cacheMap: unique symbol;
 declare type Fn<V> = () => V;
-interface CacheOptions {
-    namespace?: string;
+interface Options {
     size?: number;
     callback?: Fn<any>;
-    storage?: Storage;
+}
+interface StorageOptions extends Options {
+    namespace?: string;
+    storage: Storage;
 }
 interface CustomMap<Value = any> {
     [index: string]: Value;
 }
+declare const _write: unique symbol;
+declare const _remove: unique symbol;
+declare const _cacheMap: unique symbol;
 /** Abstract Cache
  * @param {object} options = {
  *	 namespace {string} Cache key namespace
@@ -20,8 +22,8 @@ interface CustomMap<Value = any> {
  */
 declare class Cache {
     #private;
-    [cacheMap]: Map<string, any>;
-    constructor(options: CacheOptions);
+    [_cacheMap]: Map<string, number>;
+    constructor(options: Options);
     /**
      * Get cache key namespace
      * @return {string} The key namespace
@@ -57,16 +59,16 @@ declare class Cache {
     read<K>(key: K, callback?: Fn<any>): any;
     /**
      * Write in cache
-     * @param {array||string||number} key
+     * @param {array|string|number} key
      * @param {mixed} value
      * @return The key
      */
-    [write]<K>(key: K, value: any): void;
+    [_write]<K>(key: K, value: any): void;
     /**
      * Remove key of cache
-     * @param {array||string||number} key
+     * @param {array|string|number} key
      */
-    [remove]<K>(key: K): void;
+    [_remove]<K>(key: K): void;
 }
 /**
  * MemoryCache Cache
@@ -76,7 +78,7 @@ declare class Cache {
  * }
  */
 declare class MemoryCache extends Cache {
-    constructor(options: CacheOptions);
+    constructor(options?: {});
     write<K>(key: K, value: any): void;
     remove<K>(key: K): void;
 }
@@ -91,7 +93,7 @@ declare class MemoryCache extends Cache {
  */
 declare class StorageCache extends Cache {
     #private;
-    constructor(options: CacheOptions);
+    constructor(options: StorageOptions);
     private init;
     private get;
     private set;
@@ -102,12 +104,12 @@ declare class StorageCache extends Cache {
  * SessionStorage Cache
  */
 declare class SessionStorageCache extends StorageCache {
-    constructor(options: CacheOptions);
+    constructor(options?: StorageOptions);
 }
 /**
  * LocalStorage Cache
  */
 declare class LocalStorageCache extends StorageCache {
-    constructor(options: CacheOptions);
+    constructor(options?: StorageOptions);
 }
 export { MemoryCache, SessionStorageCache, LocalStorageCache };

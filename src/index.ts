@@ -1,20 +1,22 @@
-const write = Symbol('write')
-const remove = Symbol('remove')
-const cacheMap = Symbol('cacheMap')
-
-
 type Fn<V> = () => V
 
-interface CacheOptions {
-  namespace?: string
+interface Options {
   size?: number
   callback?: Fn<any>
-  storage?: Storage
+}
+
+interface StorageOptions extends Options {
+  namespace?: string
+  storage: Storage
 }
 
 interface CustomMap<Value = any> {
   [index: string]: Value
 }
+
+const _write = Symbol('write')
+const _remove = Symbol('remove')
+const _cacheMap = Symbol('cacheMap')
 
 /** Abstract Cache
  * @param {object} options = {
@@ -26,12 +28,12 @@ interface CustomMap<Value = any> {
 class Cache {
   #size: number
   #callback?: Fn<any>
-  [cacheMap]: Map<string, any>
+  [_cacheMap]: Map<string, number>
 
-  constructor(options: CacheOptions) {
+  constructor(options: Options) {
     this.#size = options.size || 30
     this.#callback = options.callback
-    this[cacheMap] = new Map()
+    this[_cacheMap] = new Map()
   }
 
   /**
@@ -52,7 +54,7 @@ class Cache {
    * @return {number}
    */
   size(): number {
-    return this[cacheMap].size
+    return this[_cacheMap].size
   }
 
   /**
@@ -62,14 +64,14 @@ class Cache {
    */
   has<K>(key: K): boolean {
     const realKey = this.generateKey(key)
-    return this[cacheMap].has(realKey)
+    return this[_cacheMap].has(realKey)
   }
 
   /**
    * Clear all in cache
    */
   clear(): void {
-    this[cacheMap].clear()
+    this[_cacheMap].clear()
   }
 
   /**
@@ -79,8 +81,8 @@ class Cache {
    */
   readAll(defaultValue?: CustomMap): CustomMap {
     if (!this.size()) return defaultValue || {}
-    const cacheObj: CustomMap = {}
-    for (const [k, v] of this[cacheMap]) {
+    const cacheObj = {} as CustomMap
+    for (const [k, v] of this[_cacheMap]) {
       cacheObj[k] = v
     }
     return cacheObj
@@ -97,40 +99,37 @@ class Cache {
     const realKey = this.generateKey(key)
     if (!this.has(realKey)) {
       if (callback) {
-        this[write](realKey, callback())
+        this[_write](realKey, callback())
       } else if (this.#callback) {
-        this[write](realKey, this.#callback())
+        this[_write](realKey, this.#callback())
       }
     }
-    return this[cacheMap].get(realKey)
+    return this[_cacheMap].get(realKey)
   }
 
   /**
    * Write in cache
-   * @param {array||string||number} key
+   * @param {array|string|number} key
    * @param {mixed} value
    * @return The key
    */
-  [write]<K>(key: K, value: any): void {
+  [_write]<K>(key: K, value: any): void {
     const realKey = this.generateKey(key)
     if (this.size() >= this.#size) {
-      const keys = this[cacheMap].keys()
+      const keys = this[_cacheMap].keys()
       const firstItem = keys.next().value
-      this[remove](firstItem)
+      this[_remove](firstItem)
     }
-    this[cacheMap].set(realKey, value)
+    this[_cacheMap].set(realKey, value)
   }
 
   /**
    * Remove key of cache
-   * @param {array||string||number} key
+   * @param {array|string|number} key
    */
-  // remove() {
-  // 	throw 'The remove method must be defined.'
-  // }
-  [remove]<K>(key: K): void {
+  [_remove]<K>(key: K): void {
     const realKey = this.generateKey(key)
-    this[cacheMap].delete(realKey)
+    this[_cacheMap].delete(realKey)
   }
 }
 
@@ -142,16 +141,16 @@ class Cache {
  * }
  */
 class MemoryCache extends Cache {
-  constructor(options: CacheOptions) {
+  constructor(options = {}) {
     super(options)
   }
 
   write<K>(key: K, value: any): void {
-    this[write](key, value)
+    this[_write](key, value)
   }
 
   remove<K>(key: K): void {
-    this[remove](key)
+    this[_remove](key)
   }
 }
 
@@ -168,40 +167,36 @@ class StorageCache extends Cache {
   #storage: Storage
   #storageKey: string
 
-  constructor(options: CacheOptions) {
+  constructor(options: StorageOptions) {
     super(options)
-    this.#storage = options.storage!
-    this.#storageKey = `${options.namespace || 'cacheJs'}_cache`
+    this.#storage = options.storage
+    this.#storageKey = `${options.namespace || 'cacheJs'}`
     this.init()
   }
 
   private init(): void {
-    const data: CustomMap = this.get()
+    const data = this.get()
     if (!data) return
-    Object.keys(data).forEach((key: string) => {
-      this[cacheMap].set(key, data[key])
-    })
+    Object.keys(data).forEach((key: string) => this[_cacheMap].set(key, data[key]))
   }
 
-  private get(): CustomMap {
-    const data: string = this.#storage.getItem(this.#storageKey) || '{}'
-    return JSON.parse(data)
+  private get(): CustomMap | null {
+    const data = this.#storage.getItem(this.#storageKey)
+    return data ? JSON.parse(data) : null
   }
 
-  private set(value: CustomMap | string): void {
-    if (typeof value !== 'string') {
-      value = JSON.stringify(value)
-    }
-    this.#storage.setItem(this.#storageKey, value)
+  private set(value: CustomMap): void {
+    const strVal = JSON.stringify(value)
+    this.#storage.setItem(this.#storageKey, strVal)
   }
 
   write<K>(key: K, value: any): void {
-    this[write](key, value)
+    this[_write](key, value)
     this.set(this.readAll())
   }
 
   remove<K>(key: K): void {
-    this[remove](key)
+    this[_remove](key)
     this.set(this.readAll())
   }
 }
@@ -210,7 +205,7 @@ class StorageCache extends Cache {
  * SessionStorage Cache
  */
 class SessionStorageCache extends StorageCache {
-  constructor(options: CacheOptions) {
+  constructor(options = {} as StorageOptions) {
     options.storage = window.sessionStorage
     super(options)
   }
@@ -220,7 +215,7 @@ class SessionStorageCache extends StorageCache {
  * LocalStorage Cache
  */
 class LocalStorageCache extends StorageCache {
-  constructor(options: CacheOptions) {
+  constructor(options = {} as StorageOptions) {
     options.storage = window.localStorage
     super(options)
   }
