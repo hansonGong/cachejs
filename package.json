@@ -2,7 +2,8 @@
   "name": "bigbig-cache",
   "version": "1.0.0",
   "description": "A front-end lightweight caching library",
-  "main": "lib/index.min.js",
+  "main": "lib/cahce.min.js",
+  "repository": "https://github.com/hansonGong/cachejs.git",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
