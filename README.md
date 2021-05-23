@@ -18,17 +18,19 @@ const options = {
   callback: () => 'Global default value'
 }
 const cache = new MemoryCache(options)
+
 // write
 cache.write([123, 'test'], 'array')
+
 // read
 const val = cache.read([123, 'test'])
+
 // size
 if (cache.size()) {
   // clear
   cache.clear()
   console.log(cache.readAll('defalut value'))
 }
-
 ```
 
 ### Browser
@@ -44,8 +46,13 @@ if (cache.size()) {
     }
   }
   var cache = new feCache.LocalStorageCache(options)
+
+  // write
   cache.write('test', 'string')
+
+  // read
   var val = cache.read('cachejs', function() { return 'Local default value' })
+
   // has
   if (cache.has('test')) {
     console.log(val)
