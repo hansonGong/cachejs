@@ -79,7 +79,7 @@ class Cache {
    * @param {mixed} defaultValue
    * @return {object}
    */
-  readAll(defaultValue?: CustomMap): CustomMap {
+  readAll<V>(defaultValue?: V): V | CustomMap{
     if (!this.size()) return defaultValue || {}
     const cacheObj = {} as CustomMap
     for (const [k, v] of this[_cacheMap]) {

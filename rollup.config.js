@@ -50,4 +50,4 @@ const outputMap = [
 
 const buildConf = options => Object.assign({}, commonConf, options)
 
-export default outputMap.map(output => buildConf({ output: { name: packageJSON.name, ...output } }))
+export default outputMap.map(output => buildConf({ output: { name: 'feCache', ...output } }))

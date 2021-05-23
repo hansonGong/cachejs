@@ -49,7 +49,7 @@ declare class Cache {
      * @param {mixed} defaultValue
      * @return {object}
      */
-    readAll(defaultValue?: CustomMap): CustomMap;
+    readAll<V>(defaultValue?: V): V | CustomMap;
     /**
      * Read value of key in cache
      * @param {array|string|number} key
