@@ -1,17 +1,17 @@
-## fe-cache
+## bigbig-cache
 
 A front-end lightweight caching library. You can use MemoryCache, SessionStorageCache and LocalStorageCache to build a cache system in JS applications.
 ### Installation
 
 ```
 // npm
-$ npm i --save fe-cache
+$ npm i --save bigbig-cache
 
 // yarn
-$ yarn add fe-cache
+$ yarn add bigbig-cache
 
 // using
-import { MemoryCache } from 'fe-cache'
+import { MemoryCache } from 'bigbig-cache'
 
 const options = {
   size: 10,
@@ -45,7 +45,7 @@ if (cache.size()) {
       return 'Global default value'
     }
   }
-  var cache = new feCache.LocalStorageCache(options)
+  var cache = new bigbigCache.LocalStorageCache(options)
 
   // write
   cache.write('test', 'string')

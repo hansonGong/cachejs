@@ -1,5 +1,5 @@
 {
-  "name": "fe-cache",
+  "name": "bigbig-cache",
   "version": "1.0.0",
   "description": "A front-end lightweight caching library",
   "main": "lib/index.min.js",
@@ -34,7 +34,7 @@
   "author": "hanson",
   "license": "ISC",
   "keywords": [
-    "fe-cache",
+    "bigbig-cache",
     "cache"
   ]
 }
