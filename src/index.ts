@@ -17,14 +17,14 @@ interface CustomMap<Value = any> {
 /** Abstract Cache
  * @param {object} options = {
  *	 namespace {string} Cache key namespace
- *   size {number} Cache size
+ *   max {number} Cache size
  *   callback {function} Globle callback function when the key does not exist
  * }
  */
 class Cache {
   private max: number
   private callback?: Fn<any>
-  protected cacheMap: Map<string, number>
+  protected cacheMap: Map<string, any>
 
   constructor(options: Options) {
     this.max = options.size || 30
@@ -34,7 +34,7 @@ class Cache {
 
   /**
    * Get cache key namespace
-   * @return {string} The key namespace
+   * @return The key namespace
    */
   generateKey<K>(key: K): string {
     if (!Array.isArray(key)) return `${key}`
@@ -47,7 +47,7 @@ class Cache {
 
   /**
    * Counts the number of items in cache unit
-   * @return {number}
+   * @return Cache size
    */
   size(): number {
     return this.cacheMap.size
@@ -73,9 +73,9 @@ class Cache {
   /**
    * Read all data
    * @param {mixed} defaultValue
-   * @return {object}
+   * @return all
    */
-  readAll<V>(defaultValue?: V): V | CustomMap{
+  readAll<V>(defaultValue?: V): V | CustomMap {
     if (!this.size()) return defaultValue || {}
     const cacheObj = {} as CustomMap
     for (const [k, v] of this.cacheMap) {
@@ -88,7 +88,7 @@ class Cache {
    * Read value of key in cache
    * @param {array|string|number} key
    * @param {function} callback Callback function when the key does not exist
-   * @return {mixed}
+   * @return vaule
    */
 
   read<K>(key: K, callback?: Fn<any>): any {
@@ -107,7 +107,6 @@ class Cache {
    * Write in cache
    * @param {array|string|number} key
    * @param {mixed} value
-   * @return The key
    */
   protected _write<K>(key: K, value: any): void {
     const realKey = this.generateKey(key)
@@ -132,7 +131,7 @@ class Cache {
 /**
  * MemoryCache Cache
  * @param {object} options = {
- *   size {number} Cache size
+ *   max {number} Cache size
  *   callback {function} Globle callback function when the key does not exist
  * }
  */
@@ -154,7 +153,7 @@ class MemoryCache extends Cache {
  * StorageCache Cache
  * @param {object} options = {
  *	 namespace {string} Cache key namespace
- *   size {number} Cache size
+ *   max {number} Cache size
  *   callback {function} Globle callback function when the key does not exist
  *   storage {function} storage prototype
  * }

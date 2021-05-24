@@ -10,9 +10,6 @@ interface StorageOptions extends Options {
 interface CustomMap<Value = any> {
     [index: string]: Value;
 }
-declare const _write: unique symbol;
-declare const _remove: unique symbol;
-declare const _cacheMap: unique symbol;
 /** Abstract Cache
  * @param {object} options = {
  *	 namespace {string} Cache key namespace
@@ -21,8 +18,9 @@ declare const _cacheMap: unique symbol;
  * }
  */
 declare class Cache {
-    #private;
-    [_cacheMap]: Map<string, number>;
+    private max;
+    private callback?;
+    protected cacheMap: Map<string, number>;
     constructor(options: Options);
     /**
      * Get cache key namespace
@@ -63,12 +61,12 @@ declare class Cache {
      * @param {mixed} value
      * @return The key
      */
-    [_write]<K>(key: K, value: any): void;
+    protected _write<K>(key: K, value: any): void;
     /**
      * Remove key of cache
      * @param {array|string|number} key
      */
-    [_remove]<K>(key: K): void;
+    protected _remove<K>(key: K): void;
 }
 /**
  * MemoryCache Cache
