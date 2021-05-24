@@ -14,10 +14,6 @@ interface CustomMap<Value = any> {
   [index: string]: Value
 }
 
-const _write = Symbol('write')
-const _remove = Symbol('remove')
-const _cacheMap = Symbol('cacheMap')
-
 /** Abstract Cache
  * @param {object} options = {
  *	 namespace {string} Cache key namespace
@@ -26,14 +22,14 @@ const _cacheMap = Symbol('cacheMap')
  * }
  */
 class Cache {
-  #size: number
-  #callback?: Fn<any>
-  [_cacheMap]: Map<string, number>
+  private max: number
+  private callback?: Fn<any>
+  protected cacheMap: Map<string, number>
 
   constructor(options: Options) {
-    this.#size = options.size || 30
-    this.#callback = options.callback
-    this[_cacheMap] = new Map()
+    this.max = options.size || 30
+    this.callback = options.callback
+    this.cacheMap = new Map()
   }
 
   /**
@@ -54,7 +50,7 @@ class Cache {
    * @return {number}
    */
   size(): number {
-    return this[_cacheMap].size
+    return this.cacheMap.size
   }
 
   /**
@@ -64,14 +60,14 @@ class Cache {
    */
   has<K>(key: K): boolean {
     const realKey = this.generateKey(key)
-    return this[_cacheMap].has(realKey)
+    return this.cacheMap.has(realKey)
   }
 
   /**
    * Clear all in cache
    */
   clear(): void {
-    this[_cacheMap].clear()
+    this.cacheMap.clear()
   }
 
   /**
@@ -82,7 +78,7 @@ class Cache {
   readAll<V>(defaultValue?: V): V | CustomMap{
     if (!this.size()) return defaultValue || {}
     const cacheObj = {} as CustomMap
-    for (const [k, v] of this[_cacheMap]) {
+    for (const [k, v] of this.cacheMap) {
       cacheObj[k] = v
     }
     return cacheObj
@@ -99,12 +95,12 @@ class Cache {
     const realKey = this.generateKey(key)
     if (!this.has(realKey)) {
       if (callback) {
-        this[_write](realKey, callback())
-      } else if (this.#callback) {
-        this[_write](realKey, this.#callback())
+        this._write(realKey, callback())
+      } else if (this.callback) {
+        this._write(realKey, this.callback())
       }
     }
-    return this[_cacheMap].get(realKey)
+    return this.cacheMap.get(realKey)
   }
 
   /**
@@ -113,23 +109,23 @@ class Cache {
    * @param {mixed} value
    * @return The key
    */
-  [_write]<K>(key: K, value: any): void {
+  protected _write<K>(key: K, value: any): void {
     const realKey = this.generateKey(key)
-    if (this.size() >= this.#size) {
-      const keys = this[_cacheMap].keys()
+    if (this.size() >= this.max) {
+      const keys = this.cacheMap.keys()
       const firstItem = keys.next().value
-      this[_remove](firstItem)
+      this._remove(firstItem)
     }
-    this[_cacheMap].set(realKey, value)
+    this.cacheMap.set(realKey, value)
   }
 
   /**
    * Remove key of cache
    * @param {array|string|number} key
    */
-  [_remove]<K>(key: K): void {
+  protected _remove<K>(key: K): void {
     const realKey = this.generateKey(key)
-    this[_cacheMap].delete(realKey)
+    this.cacheMap.delete(realKey)
   }
 }
 
@@ -146,11 +142,11 @@ class MemoryCache extends Cache {
   }
 
   write<K>(key: K, value: any): void {
-    this[_write](key, value)
+    this._write(key, value)
   }
 
   remove<K>(key: K): void {
-    this[_remove](key)
+    this._remove(key)
   }
 }
 
@@ -177,7 +173,7 @@ class StorageCache extends Cache {
   private init(): void {
     const data = this.get()
     if (!data) return
-    Object.keys(data).forEach((key: string) => this[_cacheMap].set(key, data[key]))
+    Object.keys(data).forEach((key: string) => this.cacheMap.set(key, data[key]))
   }
 
   private get(): CustomMap | null {
@@ -191,12 +187,12 @@ class StorageCache extends Cache {
   }
 
   write<K>(key: K, value: any): void {
-    this[_write](key, value)
+    this._write(key, value)
     this.set(this.readAll())
   }
 
   remove<K>(key: K): void {
-    this[_remove](key)
+    this._remove(key)
     this.set(this.readAll())
   }
 }
